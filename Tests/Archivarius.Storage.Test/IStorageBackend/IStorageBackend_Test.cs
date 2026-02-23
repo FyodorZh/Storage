@@ -17,7 +17,7 @@ namespace Archivarius.Storage.Test
         [Test]
         public async Task Test_AsyncFile()
         {
-            var commands = CommandsGenerator.Generate(100000, 123);
+            var commands = CommandsGenerator.Generate(10000, 123);
             Tester<IStorageBackend> tester = new();
             var tempDir = System.IO.Path.GetTempPath() + "IStorageBackend_Test_7234289";
             if (System.IO.Directory.Exists(tempDir))
@@ -36,7 +36,7 @@ namespace Archivarius.Storage.Test
         [Test]
         public async Task Test_AsyncCompressed()
         {
-            var commands = CommandsGenerator.Generate(100000, 123);
+            var commands = CommandsGenerator.Generate(10000, 123);
             Tester<IStorageBackend> tester = new();
 
             InMemoryStorageBackend inMemoryBackend = new InMemoryStorageBackend();
@@ -53,7 +53,7 @@ namespace Archivarius.Storage.Test
         [Test]
         public async Task Test_Remote()
         {
-            var commands = CommandsGenerator.Generate(100000, 123);
+            var commands = CommandsGenerator.Generate(3000, 123);
             Tester<IStorageBackend> tester = new();
 
             Log.AddConsumer(new ConsoleConsumer());

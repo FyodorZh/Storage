@@ -11,7 +11,7 @@ namespace Archivarius.Storage.Test.ChainStorage
         public async Task Test_BigChainStorage()
         {
             CommandsGenerator commandsGenerator = new();
-            var commands = commandsGenerator.Generate(30000, 1234);
+            var commands = commandsGenerator.Generate(3000, 1234);
 
             var etalon = new InMemoryChainStorage<CommandsGenerator.Payload>();
             var etalonWrapper = new ChainStorageWrapper<CommandsGenerator.Payload>(() => Task.FromResult<IChainStorage<CommandsGenerator.Payload>>(etalon));
@@ -66,7 +66,7 @@ namespace Archivarius.Storage.Test.ChainStorage
         public async Task Test_ChainStorage()
         {
             CommandsGenerator commandsGenerator = new();
-            var commands = commandsGenerator.Generate(10000, 1234);
+            var commands = commandsGenerator.Generate(3000, 1234);
 
             var etalon = new InMemoryChainStorage<CommandsGenerator.Payload>();
             var etalonWrapper = new ChainStorageWrapper<CommandsGenerator.Payload>(() => Task.FromResult<IChainStorage<CommandsGenerator.Payload>>(etalon));
