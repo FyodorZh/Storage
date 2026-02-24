@@ -59,20 +59,26 @@ namespace Archivarius.Storage
 
         async Task<bool> IReadOnlyStorageBackend.Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
         {
-            var decompressor = await _decompressors.GetAsync();
+            var decompressorVessel = new DecompressorVessel();
             try
             {
-                MemoryStream? decompressed = null;
-                if (!await _storage.Read(path, 0, (stream, _) =>
+                if (!await _storage.Read(path, (decompressorVessel, _decompressors), async (stream, pair) =>
                     {
-                        decompressed = decompressor.Decompress(stream);
-                        return Task.CompletedTask;
+                        var vessel = pair.decompressorVessel;
+                        var decompressors = pair._decompressors;
+                        vessel.Decompressor = await decompressors.GetAsync();
+                        vessel.Decompressor.Decompress(stream);
                     }))
                 {
                     return false;
                 }
 
-                await reader.Invoke(decompressed ?? throw new NullReferenceException(), param);
+                if (decompressorVessel.Decompressor == null)
+                {
+                    return false;
+                }
+
+                await reader.Invoke(decompressorVessel.Decompressor.ShowDecompressedStream(), param);
                 return true;
             }
             catch (Exception ex)
@@ -84,7 +90,10 @@ namespace Archivarius.Storage
             }
             finally
             {
-                await _decompressors.ReleaseAsync(decompressor);
+                if (decompressorVessel.Decompressor != null)
+                {
+                    await _decompressors.ReleaseAsync(decompressorVessel.Decompressor);
+                }
             }
         }
 
@@ -101,6 +110,11 @@ namespace Archivarius.Storage
         public Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path)
         {
             return _storage.GetSubPaths(path);
+        }
+
+        private class DecompressorVessel
+        {
+            public Decompressor? Decompressor;
         }
 
         private class Compressor
@@ -187,6 +201,11 @@ namespace Archivarius.Storage
                 }
 
                 _decompressedStream.Position = 0;
+                return _decompressedStream;
+            }
+            
+            public MemoryStream ShowDecompressedStream()
+            {
                 return _decompressedStream;
             }
         }
