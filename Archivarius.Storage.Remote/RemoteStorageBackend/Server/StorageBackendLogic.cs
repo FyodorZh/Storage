@@ -11,8 +11,7 @@ namespace Archivarius.Storage.Remote
 {
     public class StorageBackendLogic<TUserData> : IDisposable
     {
-        private readonly IReadOnlySyncStorageBackend _roStorageBackend;
-        private readonly ISyncStorageBackend? _storageBackend;
+        private readonly SyncStorageBackendBroker.IAccessor _storageAccessor;
         
         private readonly IMemoryRental _memoryRental;
 
@@ -28,17 +27,15 @@ namespace Archivarius.Storage.Remote
 
         private readonly Action<CommandReport>? _commandReportProcessor;
 
-        public StorageBackendLogic(ISyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<CommandReport>? commandReportProcessor)
-            :this((IReadOnlySyncStorageBackend)storageBackend, memoryRental, commandReportProcessor)
+        public StorageBackendLogic(SyncStorageBackendBroker.IAccessor storageAccessor, IMemoryRental memoryRental, Action<CommandReport>? commandReportProcessor)
         {
-            _storageBackend = storageBackend;
-        }
-        
-        public StorageBackendLogic(IReadOnlySyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<CommandReport>? commandReportProcessor)
-        {
-            storageBackend.ThrowExceptions = true;
+            if (storageAccessor.Reader != null) 
+                storageAccessor.Reader.ThrowExceptions = true;
+            if (storageAccessor.Writer != null)
+                storageAccessor.Writer.ThrowExceptions = true;
             
-            _roStorageBackend = storageBackend;
+            _storageAccessor = storageAccessor;
+            
             _resetEvent = new ManualResetEventSlim(false);
 
             _memoryRental = memoryRental;
@@ -89,6 +86,8 @@ namespace Archivarius.Storage.Remote
                     _commandReportProcessor?.Invoke(new CommandReport() { Type = command.Type, Success = isOk, Duration = sw.Elapsed });
                 }
             }
+            
+            _storageAccessor.Dispose();
         }
         
         private void EnqueueCommand(Command command)
@@ -182,7 +181,7 @@ namespace Archivarius.Storage.Remote
                     case CommandType.Read:
                         try
                         {
-                            bool res = logic._roStorageBackend.Read(_filePath!, logic, (stream, l) =>
+                            bool res = logic._storageAccessor.Reader?.Read(_filePath!, logic, (stream, l) =>
                             {
                                 l._readBuffer.SetLength(0);
                                 stream.CopyTo(l._readBuffer);
@@ -193,7 +192,7 @@ namespace Archivarius.Storage.Remote
                                 {
                                     throw new Exception("Failed to read data. Internal error");
                                 }
-                            });
+                            }) ?? false;
                             if (!res)
                             {
                                 _fail.Invoke(new Exception("Failed to read data"), _userData);
@@ -215,7 +214,7 @@ namespace Archivarius.Storage.Remote
                     case CommandType.IsExists:
                         try
                         {
-                            bool res = logic._roStorageBackend.IsExists(_filePath!);
+                            bool res = logic._storageAccessor.Reader?.IsExists(_filePath!) ?? false;
                             _boolFinish!.Invoke(res, _userData);
                             return true;
                         }
@@ -227,7 +226,12 @@ namespace Archivarius.Storage.Remote
                     case CommandType.GetSubPath:
                         try
                         {
-                            var res = logic._roStorageBackend.GetSubPaths(_dirPath!);
+                            var res = logic._storageAccessor.Reader?.GetSubPaths(_dirPath!);
+                            if (res == null)
+                            {
+                                return false;
+                            }
+                            
                             _pathsFinish!.Invoke(res, _userData);
                             return true;
                         }
@@ -239,13 +243,14 @@ namespace Archivarius.Storage.Remote
                     case CommandType.Write:
                         try
                         {
-                            if (logic._storageBackend == null)
+                            var writer = logic._storageAccessor.Writer;
+                            if (writer == null)
                             {
                                 _fail.Invoke(new InvalidOperationException("Failed to write to ReadOnly backend"), _userData);
                                 return false;
                             }
 
-                            var res = logic._storageBackend.Write(_filePath!, _bytesToWrite!, (stream, bytes) => { stream.Write(bytes.Array, bytes.Offset, bytes.Count); });
+                            var res = writer.Write(_filePath!, _bytesToWrite!, (stream, bytes) => { stream.Write(bytes.Array, bytes.Offset, bytes.Count); });
                             if (res)
                             {
                                 _boolFinish!.Invoke(res, _userData);
@@ -269,12 +274,13 @@ namespace Archivarius.Storage.Remote
                     case CommandType.Erase:
                         try
                         {
-                            if (logic._storageBackend == null)
+                            var writer = logic._storageAccessor.Writer;
+                            if (writer == null)
                             {
                                 _fail.Invoke(new InvalidOperationException("Failed to erase from ReadOnly backend"), _userData);
                                 return false;
                             }
-                            var res = logic._storageBackend.Erase(_filePath!);
+                            var res = writer.Erase(_filePath!);
                             _boolFinish!.Invoke(res, _userData);
                             return true;
                         }

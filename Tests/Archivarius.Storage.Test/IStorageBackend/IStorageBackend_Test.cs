@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Actuarius.Memory;
 using Archivarius.Storage.Remote;
 using Archivarius.Storage.Test.StorageBackend;
-using Pontifex.Api;
 using Pontifex.Transports.Direct;
 using Scriba;
 using Scriba.Consumers;
@@ -53,32 +53,44 @@ namespace Archivarius.Storage.Test
         [Test]
         public async Task Test_Remote()
         {
-            var commands = CommandsGenerator.Generate(3000, 123);
+            var commands = CommandsGenerator.Generate(3000, 123).ToArray();
             Tester<IStorageBackend> tester = new();
 
             Log.AddConsumer(new ConsoleConsumer());
             ILogger logger = new StaticLogger();
 
             AckRawDirectServer directServer = new AckRawDirectServer("test", logger, MemoryRental.Shared);
-            RemoteStorageBackendServer backend = new RemoteStorageBackendServer(new InMemorySyncStorageBackend());
+            var back = new InMemorySyncStorageBackend();
+            RemoteStorageBackendServer backend = new RemoteStorageBackendServer(back);
             backend.Setup(directServer);
             
-            AckRawDirectClient directClient = new AckRawDirectClient("test", logger, MemoryRental.Shared);
-            IStorageBackend remoteBackend = RemoteStorageBackendClient.Construct(directClient) ?? throw new Exception();
-            
             IStorageBackend etalon = new InMemoryStorageBackend();
+            
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < 5; ++i)
+            {
+                int idx = i;
+                tasks.Add(Task.Run(async () =>
+                {
+                    AckRawDirectClient directClient = new AckRawDirectClient("test", logger, MemoryRental.Shared);
+                    IStorageBackend remoteBackend = RemoteStorageBackendClient.Construct(DirPath.Root.Dir(idx.ToString()), directClient) ?? throw new Exception();
 
-            try
-            {
-                remoteBackend.ThrowExceptions = false;
-                etalon.ThrowExceptions = false;
-                var res = await tester.Run(commands, remoteBackend, etalon);
-                Assert.That(res, Is.True);
+                    try
+                    {
+                        remoteBackend.ThrowExceptions = false;
+                        etalon.ThrowExceptions = false;
+                        var res = await tester.Run(commands, remoteBackend, etalon.SubDirectory(DirPath.Root.Dir(idx.ToString())));
+                        Assert.That(res, Is.True);
+                    }
+                    finally
+                    {
+                        directClient.Stop();
+                    }
+                }));
             }
-            finally
-            {
-                directClient.Stop();
-            }
+            
+            await Task.WhenAll(tasks);
+            Assert.Charlie();
         }
     }
 }

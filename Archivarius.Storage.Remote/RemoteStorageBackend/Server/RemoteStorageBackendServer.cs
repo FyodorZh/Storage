@@ -1,14 +1,17 @@
 using System;
+using System.Text;
+using Actuarius.Memory;
 using Pontifex.Abstractions.Servers;
 using Pontifex.Api;
 using Pontifex.StopReasons;
+using Pontifex.Utils;
+using Scriba;
 
 namespace Archivarius.Storage.Remote
 {
     public class RemoteStorageBackendServer
     {
-        private readonly IReadOnlySyncStorageBackend _roStorage;
-        private readonly ISyncStorageBackend? _writeStorage;
+        private readonly SyncStorageBackendBroker _storageBroker;
 
         private IAckRawServer? _transport;
 
@@ -17,23 +20,37 @@ namespace Archivarius.Storage.Remote
 
         public RemoteStorageBackendServer(ISyncStorageBackend storage)
         {
-            _roStorage = _writeStorage = storage;
+            _storageBroker = new SyncStorageBackendBroker(storage);
         }
         
         public RemoteStorageBackendServer(IReadOnlySyncStorageBackend storage)
         {
-            _roStorage = storage;
+            _storageBroker = new SyncStorageBackendBroker(storage);
         }
         
         public bool Setup(IAckRawServer transport)
         {
             _transport = transport;
             transport.Init(new ServerSideApiFactory<RemoteStorageApi>(
-                _ =>
+                ackData =>
                 {
-                    var res = _writeStorage != null ? 
-                        new ServerSideStorageApiInstance(_writeStorage, transport.Memory, transport.Log) : 
-                        new ServerSideStorageApiInstance(_roStorage, transport.Memory, transport.Log);
+                    if (!ackData.TryPopFirst(out bool writable) || !ackData.TryPopFirst(out IMultiRefReadOnlyByteArray? pathBytes))
+                    {
+                        return null;
+                    }
+                    using var pathBytesDisposer = pathBytes.AsDisposable();
+                    var pathString = Encoding.UTF8.GetString(pathBytes.ReadOnlyArray, pathBytes.Offset, pathBytes.Count);
+                    var path = PathFactory.BuildDir(pathString);
+
+                    SyncStorageBackendBroker.IAccessor? accessor = writable ? _storageBroker.GetWriter(path) : _storageBroker.GetReader(path);
+
+                    if (accessor == null)
+                    {
+                        transport.Log.w($"Failed to get write access to path: {path}");
+                        return null;
+                    }
+
+                    var res = new ServerSideStorageApiInstance(accessor, transport.Memory, transport.Log);
                     res.ApiStarted += i => Started?.Invoke((ServerSideStorageApiInstance)i);
                     res.ApiStopped += i => Stopped?.Invoke((ServerSideStorageApiInstance)i);
                     return res;

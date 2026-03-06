@@ -24,10 +24,10 @@ namespace Archivarius.Storage.Remote
 
         public event Action<Exception>? OnError;
 
-        public static IReadOnlyStorageBackend? ConstructRO(IAckRawClient transport)
+        public static IReadOnlyStorageBackend? ConstructRO(DirPath rootPath, IAckRawClient transport)
         {            
             var api = new RemoteStorageApi();
-            if (!transport.Init(new ClientSideApi(api, transport.Memory, transport.Log)))
+            if (!transport.Init(new RemoteClientSideApi(api, rootPath, false, transport.Memory, transport.Log)))
             {
                 return null;
             }
@@ -39,10 +39,10 @@ namespace Archivarius.Storage.Remote
             return new RemoteStorageBackendClient(api, transport, false);
         }
         
-        public static IStorageBackend? Construct(IAckRawClient transport)
+        public static IStorageBackend? Construct(DirPath rootPath, IAckRawClient transport)
         {
             var api = new RemoteStorageApi();
-            if (!transport.Init(new ClientSideApi(api, transport.Memory, transport.Log)))
+            if (!transport.Init(new RemoteClientSideApi(api, rootPath, true, transport.Memory, transport.Log)))
             {
                 return null;
             }

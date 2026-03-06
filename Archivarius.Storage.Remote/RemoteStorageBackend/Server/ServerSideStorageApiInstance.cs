@@ -28,17 +28,10 @@ namespace Archivarius.Storage.Remote
 
         public int InstanceId { get; } = Interlocked.Increment(ref _nextInstanceId);
 
-        public ServerSideStorageApiInstance(IReadOnlySyncStorageBackend storage, IMemoryRental memoryRental, ILogger logger)
+        public ServerSideStorageApiInstance(SyncStorageBackendBroker.IAccessor storageAccessor, IMemoryRental memoryRental, ILogger logger)
             : base(new RemoteStorageApi(), memoryRental, logger)
         {
-            if (storage is ISyncStorageBackend wStorage)
-            {
-                _storage = new StorageBackendLogic<UserData>(wStorage, memoryRental, w => OnCommand?.Invoke(w));
-            }
-            else
-            {
-                _storage = new StorageBackendLogic<UserData>(storage, memoryRental, w => OnCommand?.Invoke(w));
-            }
+            _storage = new StorageBackendLogic<UserData>(storageAccessor, memoryRental, w => OnCommand?.Invoke(w));
 
             Api.Disconnected += _ => { _storage.Dispose(); };
 

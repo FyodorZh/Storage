@@ -8,7 +8,7 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius.Storage</Product>
-        <Version>0.2.4-dev.0</Version>
+        <Version>0.2.5-dev.0</Version>
         <Title>Archivarius storage library</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
@@ -33,8 +33,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Archivarius" Version="0.2.3-dev.0" />
-      <PackageReference Include="Archivarius.Tools" Version="0.2.3-dev.0" />
+      <PackageReference Include="Archivarius" Version="0.2.4-dev.0" />
+      <PackageReference Include="Archivarius.Tools" Version="0.2.4-dev.0" />
       <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
       <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0-preview.6.25358.103" />
     </ItemGroup>
