@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 using Actuarius.Memory;
 using Archivarius.DataModels;
 using Pontifex.Abstractions.Clients;
-using Pontifex.Api;
 using Pontifex.Api.Client;
 
 namespace Archivarius.Storage.Remote
 {
-    public class RemoteStorageBackendClient : IStorageBackend
+    public class RemoteStorageBackendClient : IRemoteStorageBackend
     {
         private readonly RemoteStorageApi _api;
         private readonly IAckRawClient _transport;
@@ -24,7 +23,7 @@ namespace Archivarius.Storage.Remote
 
         public event Action<Exception>? OnError;
 
-        public static IReadOnlyStorageBackend? ConstructRO(DirPath rootPath, IAckRawClient transport)
+        public static IRemoteReadOnlyStorageBackend? ConstructRO(DirPath rootPath, IAckRawClient transport)
         {            
             var api = new RemoteStorageApi();
             if (!transport.Init(new RemoteClientSideApi(api, rootPath, false, transport.Memory, transport.Log)))
@@ -39,7 +38,7 @@ namespace Archivarius.Storage.Remote
             return new RemoteStorageBackendClient(api, transport, false);
         }
         
-        public static IStorageBackend? Construct(DirPath rootPath, IAckRawClient transport)
+        public static IRemoteStorageBackend? Construct(DirPath rootPath, IAckRawClient transport)
         {
             var api = new RemoteStorageApi();
             if (!transport.Init(new RemoteClientSideApi(api, rootPath, true, transport.Memory, transport.Log)))
@@ -61,6 +60,11 @@ namespace Archivarius.Storage.Remote
             _isReadOnly = isReadOnly;
             _memoryRental = transport.Memory;
             _memoryStreamPool = _memoryRental.BigObjectsPool.GetPool<MemoryStream>();
+        }
+        
+        public void GracefulShutdown(int timeoutMs)
+        {
+            _api.GracefulShutdown(TimeSpan.FromMilliseconds(timeoutMs));
         }
 
         public async Task<bool> Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
