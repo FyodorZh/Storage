@@ -17,5 +17,10 @@ namespace Archivarius.Storage.Test.StorageBackend
         {
             return subject.Write(_path, 0, (s, _) => s.WriteAsync(_data, 0, _data.Length));
         }
+        
+        public override string ToString()
+        {
+            return "Write(" + _path + ")";
+        }
     }
 }

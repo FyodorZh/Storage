@@ -15,5 +15,10 @@ namespace Archivarius.Storage.Test.StorageBackend
         {
             return subject.Erase(_path);
         }
+
+        public override string ToString()
+        {
+            return "Erase(" + _path + ")";
+        }
     }
 }

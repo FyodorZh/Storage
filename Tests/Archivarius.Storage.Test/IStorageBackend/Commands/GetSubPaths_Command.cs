@@ -19,6 +19,11 @@ namespace Archivarius.Storage.Test.StorageBackend
             return new PathArray() { Paths = new List<FilePath>(await subject.GetSubPaths(_path)) };
         }
         
+        public override string ToString()
+        {
+            return "GetSubPath(" + _path + ")";
+        }
+        
         public struct PathArray : IEquatable<PathArray>
         {
             public List<FilePath> Paths = [];

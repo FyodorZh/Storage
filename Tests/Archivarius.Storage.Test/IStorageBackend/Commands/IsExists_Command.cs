@@ -15,5 +15,10 @@ namespace Archivarius.Storage.Test.StorageBackend
         {
             return subject.IsExists(_path);
         }
+        
+        public override string ToString()
+        {
+            return "IsExists(" + _path + ")";
+        }
     }
 }

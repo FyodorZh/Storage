@@ -28,6 +28,11 @@ namespace Archivarius.Storage.Test.StorageBackend
             });
             return new ByteArray() { Bytes = bytes };
         }
+        
+        public override string ToString()
+        {
+            return "Read(" + _path + ")";
+        }
 
         public struct ByteArray : IEquatable<ByteArray>
         {

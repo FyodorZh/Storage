@@ -42,7 +42,7 @@ namespace Archivarius.Storage.Test.StorageBackend
             }
 
             bool res = res1.Equals(res2);
-            Assert.That(res1, Is.EqualTo(res2));
+            Assert.That(res1, Is.EqualTo(res2), this.ToString());
             return res;
         }
     }
