@@ -7,11 +7,10 @@ using Ionic.Zlib;
 
 namespace Archivarius.Storage
 {
-    public class CompressedStorageBackend : IStorageBackend
+    public class CompressedReadOnlyStorageBackend : IReadOnlyStorageBackend
     {
-        private readonly IStorageBackend _storage;
+        private readonly IReadOnlyStorageBackend _storage;
 
-        private readonly ObjectPool<Compressor> _compressors;
         private readonly ObjectPool<Decompressor> _decompressors;
         
         public event Action<Exception>? OnError;
@@ -22,39 +21,12 @@ namespace Archivarius.Storage
             set => _storage.ThrowExceptions = value;
         }
 
-        public CompressedStorageBackend(IStorageBackend storage, CompressionLevel compressionLevel = CompressionLevel.Default)
+        public CompressedReadOnlyStorageBackend(IStorageBackend storage)
         {
             _storage = storage;
 
-            _compressors = new ObjectPool<Compressor>(() => new Compressor(compressionLevel), _ => { });
             _decompressors = new ObjectPool<Decompressor>(() => new Decompressor(), _ => { });
             storage.OnError += e => OnError?.Invoke(e);
-        }
-
-        async Task<bool> IStorageBackend.Write<TParam>(FilePath path, TParam pram, Func<Stream, TParam, Task> writer)
-        {
-            var compressor = await _compressors.GetAsync();
-            try
-            {
-                await writer(compressor.PrepareToCompress(), pram);
-                var compressedStream = compressor.Compress();
-                return await _storage.Write(path, compressedStream, (dst, _compressedStream) =>
-                {
-                    _compressedStream.WriteTo(dst);
-                    return Task.CompletedTask;
-                });
-            }
-            catch (Exception ex)
-            {
-                OnError?.Invoke(ex);
-                if (ThrowExceptions)
-                    throw;
-                return false;
-            }
-            finally
-            {
-                await _compressors.ReleaseAsync(compressor);
-            }
         }
 
         async Task<bool> IReadOnlyStorageBackend.Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
@@ -97,11 +69,6 @@ namespace Archivarius.Storage
             }
         }
 
-        Task<bool> IStorageBackend.Erase(FilePath path)
-        {
-            return _storage.Erase(path);
-        }
-
         public Task<bool> IsExists(FilePath path)
         {
             return _storage.IsExists(path);
@@ -112,48 +79,14 @@ namespace Archivarius.Storage
             return _storage.GetSubPaths(path);
         }
 
+        protected void SendError(Exception ex)
+        {
+            OnError?.Invoke(ex);
+        }
+
         private class DecompressorVessel
         {
             public Decompressor? Decompressor;
-        }
-
-        private class Compressor
-        {
-            private readonly MemoryStream _srcStream;
-            private readonly MemoryStream _compressedStream;
-            private readonly DeflateStream _compressor;
-
-            public Compressor(CompressionLevel compressionLevel)
-            {
-                _srcStream = new();
-                _compressedStream = new();
-                _compressor = new DeflateStream(_compressedStream, CompressionMode.Compress, compressionLevel);
-                _compressor.FlushMode = FlushType.Full;
-            }
-
-            public Stream PrepareToCompress()
-            {
-                _srcStream.SetLength(0);
-                return _srcStream;
-            }
-
-            public MemoryStream Compress()
-            {
-                _compressedStream.SetLength(0);
-                _compressedStream.WriteByte(1); // compressed
-                _srcStream.WriteTo(_compressor);
-                _compressor.Flush();
-
-                if (_compressedStream.Length > _srcStream.Length)
-                {
-                    _compressedStream.SetLength(0);
-                    _compressedStream.WriteByte(0);
-                    _srcStream.Position = 0;
-                    _srcStream.WriteTo(_compressedStream);
-                }
-                _compressedStream.Position = 0;
-                return _compressedStream;
-            }
         }
 
         private class Decompressor
@@ -207,6 +140,91 @@ namespace Archivarius.Storage
             public MemoryStream ShowDecompressedStream()
             {
                 return _decompressedStream;
+            }
+        }
+    }
+    
+    public class CompressedStorageBackend : CompressedReadOnlyStorageBackend, IStorageBackend
+    {
+        private readonly IStorageBackend _storage;
+
+        private readonly ObjectPool<Compressor> _compressors;
+        
+
+        public CompressedStorageBackend(IStorageBackend storage, CompressionLevel compressionLevel = CompressionLevel.Default)
+            :base(storage)
+        {
+            _storage = storage;
+            _compressors = new ObjectPool<Compressor>(() => new Compressor(compressionLevel), _ => { });
+        }
+
+        async Task<bool> IStorageBackend.Write<TParam>(FilePath path, TParam pram, Func<Stream, TParam, Task> writer)
+        {
+            var compressor = await _compressors.GetAsync();
+            try
+            {
+                await writer(compressor.PrepareToCompress(), pram);
+                var compressedStream = compressor.Compress();
+                return await _storage.Write(path, compressedStream, (dst, _compressedStream) =>
+                {
+                    _compressedStream.WriteTo(dst);
+                    return Task.CompletedTask;
+                });
+            }
+            catch (Exception ex)
+            {
+                SendError(ex);
+                if (ThrowExceptions)
+                    throw;
+                return false;
+            }
+            finally
+            {
+                await _compressors.ReleaseAsync(compressor);
+            }
+        }
+
+        Task<bool> IStorageBackend.Erase(FilePath path)
+        {
+            return _storage.Erase(path);
+        }
+
+        private class Compressor
+        {
+            private readonly MemoryStream _srcStream;
+            private readonly MemoryStream _compressedStream;
+            private readonly DeflateStream _compressor;
+
+            public Compressor(CompressionLevel compressionLevel)
+            {
+                _srcStream = new();
+                _compressedStream = new();
+                _compressor = new DeflateStream(_compressedStream, CompressionMode.Compress, compressionLevel);
+                _compressor.FlushMode = FlushType.Full;
+            }
+
+            public Stream PrepareToCompress()
+            {
+                _srcStream.SetLength(0);
+                return _srcStream;
+            }
+
+            public MemoryStream Compress()
+            {
+                _compressedStream.SetLength(0);
+                _compressedStream.WriteByte(1); // compressed
+                _srcStream.WriteTo(_compressor);
+                _compressor.Flush();
+
+                if (_compressedStream.Length > _srcStream.Length)
+                {
+                    _compressedStream.SetLength(0);
+                    _compressedStream.WriteByte(0);
+                    _srcStream.Position = 0;
+                    _srcStream.WriteTo(_compressedStream);
+                }
+                _compressedStream.Position = 0;
+                return _compressedStream;
             }
         }
     }

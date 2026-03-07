@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage
 {
-    public class ReadOnlyDirectoryStorageBackend : IReadOnlyStorageBackend
+    public class DirectoryReadOnlyStorageBackend : IReadOnlyStorageBackend
     {
         private readonly IReadOnlyStorageBackend _storage;
         protected readonly DirPath _path;
@@ -18,9 +18,9 @@ namespace Archivarius.Storage
             set => _storage.ThrowExceptions = value;
         }
 
-        public ReadOnlyDirectoryStorageBackend(IReadOnlyStorageBackend storage, DirPath dir)
+        public DirectoryReadOnlyStorageBackend(IReadOnlyStorageBackend storage, DirPath dir)
         {
-            if (storage is ReadOnlyDirectoryStorageBackend roDirBackend)
+            if (storage is DirectoryReadOnlyStorageBackend roDirBackend)
             {
                 _storage = roDirBackend._storage;
                 _path = roDirBackend._path.Dir(dir);
@@ -48,7 +48,7 @@ namespace Archivarius.Storage
             return _storage.GetSubPaths(_path.Dir(path));
         }
     }
-    public class DirectoryStorageBackend : ReadOnlyDirectoryStorageBackend, IStorageBackend
+    public class DirectoryStorageBackend : DirectoryReadOnlyStorageBackend, IStorageBackend
     {
         private readonly IStorageBackend _storage;
 
@@ -74,7 +74,7 @@ namespace Archivarius.Storage
     {
         public static IReadOnlyStorageBackend SubDirectory(this IReadOnlyStorageBackend storage, DirPath subDirectory)
         {
-            return new ReadOnlyDirectoryStorageBackend(storage, subDirectory);
+            return new DirectoryReadOnlyStorageBackend(storage, subDirectory);
         }
         
         public static IStorageBackend SubDirectory(this IStorageBackend storage, DirPath subDirectory)

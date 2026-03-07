@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage
 {
-    public class ThrottledStorageBackend : IStorageBackend
+    public class ThrottledReadOnlyStorageBackend : IReadOnlyStorageBackend
     {
-        private readonly IStorageBackend _core;
-        private readonly SemaphoreSlim _semaphore;
+        private readonly IReadOnlyStorageBackend _core;
+        protected readonly SemaphoreSlim _semaphore;
 
-        public ThrottledStorageBackend(IStorageBackend core, int maxConcurrentOperations = 10)
+        public ThrottledReadOnlyStorageBackend(IReadOnlyStorageBackend core, int maxConcurrentOperations = 10)
         {
             _core = core ?? throw new ArgumentNullException(nameof(core));
             _semaphore = new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations);
@@ -66,6 +66,17 @@ namespace Archivarius.Storage
             {
                 _semaphore.Release();
             }
+        }
+    }
+
+    public class ThrottledStorageBackend : ThrottledReadOnlyStorageBackend, IStorageBackend
+    {
+        private readonly IStorageBackend _core;
+
+        public ThrottledStorageBackend(IStorageBackend core, int maxConcurrentOperations = 10)
+            : base(core, maxConcurrentOperations)
+        {
+            _core = core ?? throw new ArgumentNullException(nameof(core));
         }
 
         public async Task<bool> Write<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> writer)
