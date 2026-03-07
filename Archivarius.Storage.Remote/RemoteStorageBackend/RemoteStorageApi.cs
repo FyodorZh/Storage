@@ -1,4 +1,3 @@
-using System;
 using Actuarius.Memory;
 using Archivarius.DataModels;
 using Pontifex.Api;
@@ -7,7 +6,7 @@ namespace Archivarius.Storage.Remote
 {
     public class RemoteStorageApi : ApiRoot
     {
-        public readonly RRDecl<StringWrapper, StructsArray<StringWrapper>> GetSubPath = new ();
+        public readonly RRDecl<Pair<StringWrapper, BoolWrapper>, StructsArray<StringWrapper>> GetNested = new ();
         public readonly RRDecl<StringWrapper, BoolWrapper> IsExists = new ();
         public readonly RRDecl<StringWrapper, MultiRefByteArrayWrapper> Read = new ();
         

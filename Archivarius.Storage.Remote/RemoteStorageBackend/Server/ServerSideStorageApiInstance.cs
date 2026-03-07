@@ -40,7 +40,7 @@ namespace Archivarius.Storage.Remote
             Api.Disconnected += _ => { _storage.Dispose(); };
 
             Api.IsExists.SetProcessor(IsExists);
-            Api.GetSubPath.SetProcessor(GetSubPath);
+            Api.GetNested.SetProcessor(GetNested);
             Api.Read.SetProcessor(Read);
             Api.Write.SetProcessor(Write);
             Api.Delete.SetProcessor(Delete);
@@ -66,12 +66,12 @@ namespace Archivarius.Storage.Remote
                 (e, data) => data.Fail_IsExistsRequest(e));
         }
 
-        private void GetSubPath(Request<StringWrapper, StructsArray<StringWrapper>> request)
+        private void GetNested(Request<Pair<StringWrapper, BoolWrapper>, StructsArray<StringWrapper>> request)
         {
             DirPath dirPath;
             try
             {
-                dirPath = PathFactory.BuildDir(request.Data.Value ?? throw new Exception("DirPath is null"));
+                dirPath = PathFactory.BuildDir(request.Data.First.Value ?? throw new Exception("DirPath is null"));
             }
             catch (Exception ex)
             {
@@ -79,9 +79,11 @@ namespace Archivarius.Storage.Remote
                 return;
             }
 
+            bool recursive = request.Data.Second.Value;
+
             var userData = _storage.GetFreeUserData() ?? new UserData();
-            userData.GetSubPathsRequest = request;
-            _storage.GetSubPath(dirPath, userData,
+            userData.GetNestedRequest = request;
+            _storage.GetNested(dirPath, recursive, userData,
                 (res, data) =>
                 {
                     var model = new StructsArray<StringWrapper>(res.Select(fPath => new StringWrapper(fPath.FullName)).ToArray());
@@ -159,7 +161,7 @@ namespace Archivarius.Storage.Remote
         private class UserData
         {
             public Request<StringWrapper, BoolWrapper>? IsExistsRequest;
-            public Request<StringWrapper, StructsArray<StringWrapper>>? GetSubPathsRequest;
+            public Request<Pair<StringWrapper, BoolWrapper>, StructsArray<StringWrapper>>? GetNestedRequest;
             public Request<StringWrapper, MultiRefByteArrayWrapper>? ReadRequest;
             public Request<Pair<StringWrapper, MultiRefByteArrayWrapper>, BoolWrapper>? WriteRequest;
             public Request<StringWrapper, BoolWrapper>? EraseRequest;
@@ -172,8 +174,8 @@ namespace Archivarius.Storage.Remote
 
             public void OK_GetSubPathsRequest(StructsArray<StringWrapper> res)
             {
-                GetSubPathsRequest!.Value.Response(res);
-                GetSubPathsRequest = null;
+                GetNestedRequest!.Value.Response(res);
+                GetNestedRequest = null;
             }
 
             public void OK_ReadRequest(IMultiRefByteArray? res)
@@ -211,8 +213,8 @@ namespace Archivarius.Storage.Remote
 
             public void Fail_GetSubPathsRequest(Exception ex)
             {
-                GetSubPathsRequest!.Value.Fail(ex.Message);
-                GetSubPathsRequest = null;
+                GetNestedRequest!.Value.Fail(ex.Message);
+                GetNestedRequest = null;
             }
 
             public void Fail_ReadRequest(Exception ex)

@@ -5,23 +5,25 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage.Test.StorageBackend
 {
-    public class GetSubPaths_Command : StorageBackendTestCommand<GetSubPaths_Command.PathArray>
+    public class GetNested_Command : StorageBackendTestCommand<GetNested_Command.PathArray>
     {
         private readonly DirPath _path;
+        private readonly bool _recursive;
         
-        public GetSubPaths_Command(DirPath path)
+        public GetNested_Command(DirPath path, bool recursive)
         {
             _path = path;
+            _recursive = recursive;
         }
         
         protected override async Task<PathArray> InvokeOnSubject(IStorageBackend subject)
         {
-            return new PathArray() { Paths = new List<FilePath>(await subject.GetSubPaths(_path)) };
+            return new PathArray() { Paths = new List<FilePath>(await subject.GetNested(_path, _recursive)) };
         }
         
         public override string ToString()
         {
-            return "GetSubPath(" + _path + ")";
+            return "GetSubPath(" + _path + ", " + _recursive + ")";
         }
         
         public struct PathArray : IEquatable<PathArray>

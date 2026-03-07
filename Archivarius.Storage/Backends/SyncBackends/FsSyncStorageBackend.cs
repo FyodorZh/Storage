@@ -105,7 +105,7 @@ namespace Archivarius.Storage
             return File.Exists(filePath);
         }
 
-        public IReadOnlyList<FilePath> GetSubPaths(DirPath path)
+        public IReadOnlyList<FilePath> GetNested(DirPath path, bool recursive)
         {
             try
             {
@@ -119,7 +119,7 @@ namespace Archivarius.Storage
 
                 PathFactory factory = new();
 
-                var list = Directory.GetFiles(dir, "*", SearchOption.AllDirectories).Select(file =>
+                var list = Directory.GetFiles(dir, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).Select(file =>
                 {
                     file = file.Substring(rootDirLength);
                     return (FilePath)factory.BuildWithCache(file);

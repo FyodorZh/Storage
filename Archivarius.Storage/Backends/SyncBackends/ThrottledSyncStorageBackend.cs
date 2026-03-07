@@ -54,12 +54,12 @@ namespace Archivarius.Storage
             }
         }
 
-        public IReadOnlyList<FilePath> GetSubPaths(DirPath path)
+        public IReadOnlyList<FilePath> GetNested(DirPath path, bool recursiv)
         {
             _semaphore.WaitOne();
             try
             {
-                return _core.GetSubPaths(path);
+                return _core.GetNested(path, recursiv);
             }
             finally
             {

@@ -42,9 +42,9 @@ namespace Archivarius.Storage
             return _storage.IsExists(_path.File(path));
         }
 
-        public IReadOnlyList<FilePath> GetSubPaths(DirPath path)
+        public IReadOnlyList<FilePath> GetNested(DirPath path, bool recursive)
         {
-            return _storage.GetSubPaths(_path.Dir(path));
+            return _storage.GetNested(_path.Dir(path), recursive);
         }
     }
     

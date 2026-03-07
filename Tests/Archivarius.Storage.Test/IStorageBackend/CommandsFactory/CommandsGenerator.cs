@@ -24,7 +24,7 @@ namespace Archivarius.Storage.Test.StorageBackend
                         yield return new IsExists_Command(GetRndFilePath(rnd, GenRndDirPath(rnd, dirDepth, dirNameVariance), fileNameVariance));
                         break;
                     case 2:
-                        yield return new GetSubPaths_Command(GenRndDirPath(rnd, dirDepth, dirNameVariance));
+                        yield return new GetNested_Command(GenRndDirPath(rnd, dirDepth, dirNameVariance), rnd.Next() % 2 == 0);
                         break;
                     case 3:
                         yield return new Erase_Command(GetRndFilePath(rnd, GenRndDirPath(rnd, dirDepth, dirNameVariance), fileNameVariance));

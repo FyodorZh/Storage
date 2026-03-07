@@ -55,12 +55,12 @@ namespace Archivarius.Storage
             }
         }
 
-        public async Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path)
+        public async Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
         {
             await _semaphore.WaitAsync();
             try
             {
-                return await _core.GetSubPaths(path);
+                return await _core.GetNested(path, recursive);
             }
             finally
             {

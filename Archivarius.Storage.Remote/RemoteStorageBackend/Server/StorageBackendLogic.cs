@@ -108,9 +108,9 @@ namespace Archivarius.Storage.Remote
             EnqueueCommand(command);
         }
 
-        public void GetSubPath(DirPath path, TUserData userData, Action<IReadOnlyList<FilePath>, TUserData> onFinish, Action<Exception, TUserData> onFail)
+        public void GetNested(DirPath path, bool recursive, TUserData userData, Action<IReadOnlyList<FilePath>, TUserData> onFinish, Action<Exception, TUserData> onFail)
         {
-            var command = Command.GetSubPath(path, userData, onFinish, onFail);
+            var command = Command.GetNested(path, recursive, userData, onFinish, onFail);
             EnqueueCommand(command);
         }
 
@@ -132,6 +132,7 @@ namespace Archivarius.Storage.Remote
             private TUserData _userData;
             private FilePath? _filePath;
             private DirPath? _dirPath;
+            private bool _boolParam;
 
             private IMultiRefByteArray? _bytesToWrite;
 
@@ -159,9 +160,9 @@ namespace Archivarius.Storage.Remote
                 return new Command() { _type = CommandType.IsExists, _filePath = path, _userData = userData, _boolFinish = onFinish, _fail = onFail};
             }
 
-            public static Command GetSubPath(DirPath path, TUserData userData, Action<IReadOnlyList<FilePath>, TUserData> onFinish, Action<Exception, TUserData> onFail)
+            public static Command GetNested(DirPath path, bool recursive, TUserData userData, Action<IReadOnlyList<FilePath>, TUserData> onFinish, Action<Exception, TUserData> onFail)
             {
-                return new Command() { _type = CommandType.GetSubPath, _dirPath = path, _userData = userData, _pathsFinish = onFinish, _fail = onFail};
+                return new Command() { _type = CommandType.GetNested, _boolParam = recursive, _dirPath = path, _userData = userData, _pathsFinish = onFinish, _fail = onFail};
             }
             
             public static Command Write(FilePath path, IMultiRefByteArray bytesToWrite, TUserData userData, Action<bool, TUserData> onFinish, Action<Exception, TUserData> onFail)
@@ -223,10 +224,10 @@ namespace Archivarius.Storage.Remote
                             _fail.Invoke(ex, _userData);
                             return false;
                         }
-                    case CommandType.GetSubPath:
+                    case CommandType.GetNested:
                         try
                         {
-                            var res = logic._storageAccessor.Reader?.GetSubPaths(_dirPath!);
+                            var res = logic._storageAccessor.Reader?.GetNested(_dirPath!, _boolParam);
                             if (res == null)
                             {
                                 return false;

@@ -115,11 +115,12 @@ namespace Archivarius.Storage.Remote
             }
         }
 
-        public async Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path)
+        public async Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
         {
             try
             {
-                var res = await _api.GetSubPath.RequestAsync(new StringWrapper(path.FullName), TimeSpan.FromDays(1));
+                var res = await _api.GetNested.RequestAsync(
+                    new Pair<StringWrapper, BoolWrapper>(new StringWrapper(path.FullName), new BoolWrapper(recursive)), TimeSpan.FromDays(1));
                 if (res.Value == null)
                     return Array.Empty<FilePath>();
                 return res.Value.Select(s => PathFactory.BuildFile(s.Value!)).ToArray();

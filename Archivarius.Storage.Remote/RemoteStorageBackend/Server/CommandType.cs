@@ -2,7 +2,7 @@ namespace Archivarius.Storage.Remote
 {
     public enum CommandType
     {
-        Read = 0, IsExists, GetSubPath, Write, Erase
+        Read = 0, IsExists, GetNested, Write, Erase
     }
 
     public static class CommandType_Ext
@@ -10,7 +10,7 @@ namespace Archivarius.Storage.Remote
         private static string[] _hash = {
             nameof(CommandType.Read),
             nameof(CommandType.IsExists),
-            nameof(CommandType.GetSubPath),
+            nameof(CommandType.GetNested),
             nameof(CommandType.Write),
             nameof(CommandType.Erase)
         };

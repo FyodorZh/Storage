@@ -21,7 +21,7 @@ namespace Archivarius.Storage
             set => _storage.ThrowExceptions = value;
         }
 
-        public CompressedReadOnlyStorageBackend(IStorageBackend storage)
+        public CompressedReadOnlyStorageBackend(IReadOnlyStorageBackend storage)
         {
             _storage = storage;
 
@@ -74,9 +74,9 @@ namespace Archivarius.Storage
             return _storage.IsExists(path);
         }
 
-        public Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path)
+        public Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
         {
-            return _storage.GetSubPaths(path);
+            return _storage.GetNested(path, recursive);
         }
 
         protected void SendError(Exception ex)

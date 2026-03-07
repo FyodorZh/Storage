@@ -39,16 +39,17 @@ namespace Archivarius.Storage
         /// FALSE/Exception - something went wrong
         /// </returns>
         bool IsExists(FilePath path);
-        
+
         /// <summary>
         /// Returns a list of files inside the specified directory (and subdirectories)
         /// </summary>
         /// <param name="path"> Directory path </param>
+        /// <param name="recursive"></param>
         /// <returns>
         /// [files] - List of files
         /// []/Exception - if something went wrong
         /// </returns>
-        IReadOnlyList<FilePath> GetSubPaths(DirPath path);
+        IReadOnlyList<FilePath> GetNested(DirPath path, bool recursive);
     }
     
     public interface ISyncStorageBackend : IReadOnlySyncStorageBackend

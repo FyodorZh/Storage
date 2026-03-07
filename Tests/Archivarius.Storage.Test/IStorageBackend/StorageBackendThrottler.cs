@@ -40,10 +40,10 @@ namespace Archivarius.Storage.Test
             return await _backend.IsExists(path);
         }
 
-        public async Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path)
+        public async Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
         {
             await Task.Delay(_delay);
-            return await _backend.GetSubPaths(path);
+            return await _backend.GetNested(path, recursive);
         }
 
         public async Task<bool> Write<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> writer)

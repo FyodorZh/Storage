@@ -10,7 +10,7 @@ namespace Archivarius.Storage
         Task<TData?> GetStruct<TData>(FilePath path) where TData : struct, IDataStruct;
         Task<TData?> GetVersionedStruct<TData>(FilePath path) where TData : struct, IVersionedDataStruct;
         Task<bool> IsExists(FilePath path);
-        Task<IReadOnlyCollection<FilePath>> GetElements(DirPath path);
+        Task<IReadOnlyCollection<FilePath>> GetElements(DirPath path, bool recursive);
     }
     
     public interface IKeyValueStorage : IReadOnlyKeyValueStorage

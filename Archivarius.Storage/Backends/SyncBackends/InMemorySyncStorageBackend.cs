@@ -52,7 +52,7 @@ namespace Archivarius.Storage
             }
         }
 
-        public IReadOnlyList<FilePath> GetSubPaths(DirPath path)
+        public IReadOnlyList<FilePath> GetNested(DirPath path, bool recursive)
         {
             try
             {
@@ -63,7 +63,20 @@ namespace Archivarius.Storage
                 }
                 
                 var list = new List<FilePath>();
-                Traverse(list, path, dirNode);
+                if (recursive)
+                {
+                    Traverse(list, path, dirNode);    
+                }
+                else
+                {
+                    foreach (var child in dirNode.Children)
+                    {
+                        if (child is FileNode file)
+                        {
+                            list.Add(path.File(file.Name));
+                        }
+                    }
+                }
                 list.Sort();
                 return list;
 

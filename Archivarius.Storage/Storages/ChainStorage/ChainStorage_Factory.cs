@@ -8,7 +8,7 @@ namespace Archivarius.Storage
             int packSize = 1000)
             where TData : class, IDataStruct
         {
-            var list = await storage.GetElements(path);
+            var list = await storage.GetElements(path, true);
             if (list.Count > 0)
             {
                 return null;
