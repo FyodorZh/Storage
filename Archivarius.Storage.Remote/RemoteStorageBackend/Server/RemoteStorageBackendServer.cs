@@ -5,7 +5,6 @@ using Pontifex.Abstractions.Servers;
 using Pontifex.Api;
 using Pontifex.StopReasons;
 using Pontifex.Utils;
-using Scriba;
 
 namespace Archivarius.Storage.Remote
 {

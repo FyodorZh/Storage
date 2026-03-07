@@ -15,6 +15,7 @@ namespace Archivarius.Storage.Remote
         int InstanceId { get; }
         event Action<CommandReport>? OnCommand;
         IEndPoint RemoteEndpoint { get; }
+        DirPath Path { get; }
     }
     
     internal class ServerSideStorageApiInstance : ServerSideApiInstance<RemoteStorageApi>, IServerSideStorageApiInstance
@@ -26,12 +27,15 @@ namespace Archivarius.Storage.Remote
 
         public IEndPoint RemoteEndpoint => Endpoint;
 
+        public DirPath Path { get; }
+
         public int InstanceId { get; } = Interlocked.Increment(ref _nextInstanceId);
 
         public ServerSideStorageApiInstance(SyncStorageBackendBroker.IAccessor storageAccessor, IMemoryRental memoryRental, ILogger logger)
             : base(new RemoteStorageApi(), memoryRental, logger)
         {
             _storage = new StorageBackendLogic<UserData>(storageAccessor, memoryRental, w => OnCommand?.Invoke(w));
+            Path = storageAccessor.Path;
 
             Api.Disconnected += _ => { _storage.Dispose(); };
 
