@@ -16,6 +16,7 @@ namespace Archivarius.Storage.Remote
         event Action<CommandReport>? OnCommand;
         IEndPoint RemoteEndpoint { get; }
         DirPath Path { get; }
+        bool IsReadOnly { get; }
     }
     
     internal class ServerSideStorageApiInstance : ServerSideApiInstance<RemoteStorageApi>, IServerSideStorageApiInstance
@@ -29,6 +30,8 @@ namespace Archivarius.Storage.Remote
 
         public DirPath Path { get; }
 
+        public bool IsReadOnly { get; }
+
         public int InstanceId { get; } = Interlocked.Increment(ref _nextInstanceId);
 
         public ServerSideStorageApiInstance(SyncStorageBackendBroker.IAccessor storageAccessor, IMemoryRental memoryRental, ILogger logger)
@@ -36,6 +39,7 @@ namespace Archivarius.Storage.Remote
         {
             _storage = new StorageBackendLogic<UserData>(storageAccessor, memoryRental, w => OnCommand?.Invoke(w));
             Path = storageAccessor.Path;
+            IsReadOnly = storageAccessor.Writer == null;
 
             Api.Disconnected += _ => { _storage.Dispose(); };
 
