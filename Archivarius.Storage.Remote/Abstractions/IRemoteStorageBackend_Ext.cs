@@ -61,7 +61,7 @@ namespace Archivarius.Storage.Remote
                 return _wrapped.IsExists(path);
             }
 
-            public Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
+            public Task<IReadOnlyList<FilePath>> GetNested(DirPath path, bool recursive)
             {
                 return _wrapped.GetNested(path, recursive);
             }

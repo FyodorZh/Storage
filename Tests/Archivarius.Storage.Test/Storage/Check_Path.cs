@@ -24,6 +24,19 @@ namespace Archivarius.Tests
             Assert.That(PathFactory.BuildFile("/dir/file").FullName, Is.EqualTo("/dir/file"));
             Assert.That(DirPath.Root.Dir("dir1").Dir(DirPath.Root).Dir("dir2").Dir(DirPath.Root).FullName,
                 Is.EqualTo("/dir1/dir2"));
+            {
+                DirPath? dir;
+                Assert.That(DirPath.Root.Dir("dir1").Dir("dir2").TryGetRelativeTo(DirPath.Root.Dir("dir1"), out dir), Is.True);
+                Assert.That(dir.FullName, Is.EqualTo("/dir2"));
+                Assert.That(DirPath.Root.Dir("dir1").Dir("dir2").TryGetRelativeTo(DirPath.Root.Dir("dir"), out dir), Is.False);
+                Assert.That(dir?.FullName, Is.Null);
+                
+                FilePath? file;
+                Assert.That(DirPath.Root.Dir("dir1").File("file2").TryGetRelativeTo(DirPath.Root.Dir("dir1"), out file), Is.True);
+                Assert.That(file.FullName, Is.EqualTo("/file2"));
+                Assert.That(DirPath.Root.Dir("dir1").File("file2").TryGetRelativeTo(DirPath.Root.Dir("dir"), out file), Is.False);
+                Assert.That(file?.FullName, Is.Null);
+            }
         }
     }
 }

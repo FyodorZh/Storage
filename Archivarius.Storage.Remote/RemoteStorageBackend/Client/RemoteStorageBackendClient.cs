@@ -115,7 +115,7 @@ namespace Archivarius.Storage.Remote
             }
         }
 
-        public async Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
+        public async Task<IReadOnlyList<FilePath>> GetNested(DirPath path, bool recursive)
         {
             try
             {

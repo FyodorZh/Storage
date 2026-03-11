@@ -76,9 +76,9 @@ namespace Archivarius.Storage
             return _storage.IsExists(path);
         }
 
-        public Task<IReadOnlyCollection<FilePath>> GetElements(DirPath path, bool recursive)
+        public async Task<IReadOnlyCollection<FilePath>> GetElements(DirPath path, bool recursive)
         {
-            return _storage.GetNested(path, recursive);
+            return await _storage.GetNested(path, recursive);
         }
     }
     

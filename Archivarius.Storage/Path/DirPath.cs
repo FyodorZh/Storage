@@ -45,6 +45,18 @@ namespace Archivarius.Storage
             return Combine(this, path);
         }
 
+        public bool TryGetRelativeTo(DirPath path, out DirPath? relativePath)
+        {
+            if (FullName.StartsWith(path.FullName) && FullName.Length >= path.FullName.Length && FullName[path.FullName.Length] == '/')
+            {
+                relativePath = PathFactory.BuildDir(FullName.Substring(path.FullName.Length));
+                return true;
+            }
+
+            relativePath = null;
+            return false;
+        }
+
         private static DirPath Combine(DirPath dir1, DirPath dir2)
         {
             if (dir2._parent != null)

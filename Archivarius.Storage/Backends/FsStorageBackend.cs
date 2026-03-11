@@ -105,14 +105,14 @@ namespace Archivarius.Storage
             return Task.FromResult(File.Exists(filePath));
         }
 
-        public Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
+        public Task<IReadOnlyList<FilePath>> GetNested(DirPath path, bool recursive)
         {
             try
             {
                 var dir = _root + path;
                 if (!Directory.Exists(dir))
                 {
-                    return Task.FromResult<IReadOnlyCollection<FilePath>>([]);
+                    return Task.FromResult<IReadOnlyList<FilePath>>([]);
                 }
 
                 int rootDirLength = _root.Length;
@@ -127,14 +127,14 @@ namespace Archivarius.Storage
 
                 list.Sort();
 
-                return Task.FromResult<IReadOnlyCollection<FilePath>>(list);
+                return Task.FromResult<IReadOnlyList<FilePath>>(list);
             }
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
                 if (ThrowExceptions)
                     throw;
-                return Task.FromResult<IReadOnlyCollection<FilePath>>([]);
+                return Task.FromResult<IReadOnlyList<FilePath>>([]);
             }
         }
     }

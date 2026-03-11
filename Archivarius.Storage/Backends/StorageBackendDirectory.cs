@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Archivarius.Storage
@@ -43,9 +44,20 @@ namespace Archivarius.Storage
             return _storage.IsExists(_path.File(path));
         }
 
-        public Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive)
+        public async Task<IReadOnlyList<FilePath>> GetNested(DirPath path, bool recursive)
         {
-            return _storage.GetNested(_path.Dir(path), recursive);
+            var list = await _storage.GetNested(_path.Dir(path), recursive);
+            FilePath[] res = new FilePath[list.Count];
+            int pos = 0;
+            foreach (var element in list)
+            {
+                if (!element.TryGetRelativeTo(_path, out res[pos++]!))
+                {
+                    throw new Exception($"Failed to extract '{_path} from '{element}'");
+                }
+            }
+
+            return res;
         }
     }
     public class DirectoryStorageBackend : DirectoryReadOnlyStorageBackend, IStorageBackend

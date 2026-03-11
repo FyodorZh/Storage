@@ -35,6 +35,11 @@ namespace Archivarius.Storage.Test.StorageBackend
             {
                 return Paths.SequenceEqual(other.Paths);
             }
+
+            public override string ToString()
+            {
+                return "[" + string.Join(", ", Paths.Select(p => p.ToString())) + "]";
+            }
         }
     }
 }

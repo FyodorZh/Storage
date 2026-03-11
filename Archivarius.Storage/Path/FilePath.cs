@@ -14,5 +14,17 @@ namespace Archivarius.Storage
                 throw new InvalidOperationException();
             }
         }
+        
+        public bool TryGetRelativeTo(DirPath path, out FilePath? relativePath)
+        {
+            if (FullName.StartsWith(path.FullName) && FullName.Length >= path.FullName.Length && FullName[path.FullName.Length] == '/')
+            {
+                relativePath = PathFactory.BuildFile(FullName.Substring(path.FullName.Length));
+                return true;
+            }
+
+            relativePath = null;
+            return false;
+        }
     }
 }

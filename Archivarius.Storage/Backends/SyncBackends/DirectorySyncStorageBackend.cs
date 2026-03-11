@@ -44,7 +44,18 @@ namespace Archivarius.Storage
 
         public IReadOnlyList<FilePath> GetNested(DirPath path, bool recursive)
         {
-            return _storage.GetNested(_path.Dir(path), recursive);
+            var list = _storage.GetNested(_path.Dir(path), recursive);
+            FilePath[] res = new FilePath[list.Count];
+            int pos = 0;
+            foreach (var element in list)
+            {
+                if (!element.TryGetRelativeTo(_path, out res[pos++]!))
+                {
+                    throw new Exception($"Failed to extract '{_path} from '{element}'");
+                }
+            }
+
+            return res;
         }
     }
     

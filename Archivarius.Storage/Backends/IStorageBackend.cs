@@ -50,7 +50,7 @@ namespace Archivarius.Storage
         /// [files] - List of files
         /// []/Exception - if something went wrong
         /// </returns>
-        Task<IReadOnlyCollection<FilePath>> GetNested(DirPath path, bool recursive);
+        Task<IReadOnlyList<FilePath>> GetNested(DirPath path, bool recursive);
     }
     
     public interface IStorageBackend : IReadOnlyStorageBackend
