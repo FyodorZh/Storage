@@ -38,7 +38,7 @@ namespace Archivarius.Storage
                     {
                         var vessel = pair.decompressorVessel;
                         var decompressors = pair._decompressors;
-                        vessel.Decompressor = await decompressors.GetAsync();
+                        vessel.Decompressor = decompressors.Get();
                         vessel.Decompressor.Decompress(stream);
                     }))
                 {
@@ -64,7 +64,7 @@ namespace Archivarius.Storage
             {
                 if (decompressorVessel.Decompressor != null)
                 {
-                    await _decompressors.ReleaseAsync(decompressorVessel.Decompressor);
+                    _decompressors.Release(decompressorVessel.Decompressor);
                 }
             }
         }
@@ -160,7 +160,7 @@ namespace Archivarius.Storage
 
         async Task<bool> IStorageBackend.Write<TParam>(FilePath path, TParam pram, Func<Stream, TParam, Task> writer)
         {
-            var compressor = await _compressors.GetAsync();
+            var compressor = _compressors.Get();
             try
             {
                 await writer(compressor.PrepareToCompress(), pram);
@@ -180,7 +180,7 @@ namespace Archivarius.Storage
             }
             finally
             {
-                await _compressors.ReleaseAsync(compressor);
+                _compressors.Release(compressor);
             }
         }
 

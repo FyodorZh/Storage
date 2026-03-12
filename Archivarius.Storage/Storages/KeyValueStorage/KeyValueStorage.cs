@@ -31,7 +31,7 @@ namespace Archivarius.Storage
             TData? result = null;
             await _storage.Read(path, 0, async (stream, _) =>
             {
-                var (success, data) = await _deserializer.DeserializeClass<TData>(stream);
+                var success = _deserializer.DeserializeClass<TData>(stream, out var data);
                 if (!success)
                 {
                     throw new Exception("Failed to deserialize data");
@@ -46,7 +46,7 @@ namespace Archivarius.Storage
             TData? result = null;
             await _storage.Read(path, 0, async (stream, _) =>
             {
-                var (success, data) = await _deserializer.DeserializeStruct<TData>(stream);
+                var success = _deserializer.DeserializeStruct<TData>(stream, out var data);
                 if (!success)
                 {
                     throw new Exception("Failed to deserialize data");
@@ -61,7 +61,7 @@ namespace Archivarius.Storage
             TData? result = null;
             await _storage.Read(path, 0, async (stream, _) =>
             {
-                var (success, data) = await _deserializer.DeserializeVersionedStruct<TData>(stream);
+                var success = _deserializer.DeserializeVersionedStruct<TData>(stream, out var data);
                 if (!success)
                 {
                     throw new Exception("Failed to deserialize data");
@@ -112,7 +112,7 @@ namespace Archivarius.Storage
 
         public async Task Set<TData>(FilePath path, TData data) where TData : class, IDataStruct
         {
-            var bytesList = await _serializer.SerializeClassAsync(data);
+            var bytesList = _serializer.SerializeClass(data);
             await _storage.Write(path, bytesList, (dst, bytes) =>
             {
                 dst.Write(bytes, 0, bytes.Length);
@@ -122,7 +122,7 @@ namespace Archivarius.Storage
 
         public async Task SetStruct<TData>(FilePath path, TData data) where TData : struct, IDataStruct
         {
-            var bytesList = await _serializer.SerializeStructAsync(data);
+            var bytesList = _serializer.SerializeStruct(data);
             await _storage.Write(path, bytesList, (dst, bytes) =>
             {
                 dst.Write(bytes, 0, bytes.Length);
@@ -132,7 +132,7 @@ namespace Archivarius.Storage
 
         public async Task SetVersionedStruct<TData>(FilePath path, TData data) where TData : struct, IVersionedDataStruct
         {
-            var bytesList = await _serializer.SerializeVersionedStructAsync(data);
+            var bytesList = _serializer.SerializeVersionedStruct(data);
             await _storage.Write(path, bytesList, (dst, bytes) =>
             {
                 dst.Write(bytes, 0, bytes.Length);
