@@ -81,9 +81,9 @@ namespace Archivarius.Storage.Remote
                         break;
                     }
                     sw.Restart();
-                    bool isOk = command.Run(this);
+                    bool isOk = command.Run(this, out var error);
                     sw.Stop();
-                    _commandReportProcessor?.Invoke(new CommandReport() { Type = command.Type, Success = isOk, Duration = sw.Elapsed });
+                    _commandReportProcessor?.Invoke(new CommandReport() { Type = command.Type, Success = isOk, Error = error, Duration = sw.Elapsed });
                 }
             }
             
@@ -175,8 +175,9 @@ namespace Archivarius.Storage.Remote
                 return new Command() { _type = CommandType.Erase, _filePath = path, _userData = userData, _boolFinish = onFinish, _fail = onFail};
             }
 
-            public bool Run(StorageBackendLogic<TUserData> logic)
+            public bool Run(StorageBackendLogic<TUserData> logic, out string? error)
             {
+                error = null;
                 switch (_type)
                 {
                     case CommandType.Read:
@@ -191,12 +192,13 @@ namespace Archivarius.Storage.Remote
                                 int count = l._readBuffer.Read(l._readData.Array, l._readData.Offset, l._readData.Count);
                                 if (count != l._readData.Count)
                                 {
-                                    throw new Exception("Failed to read data. Internal error");
+                                    throw new Exception("Failed to read data. Internal error.");
                                 }
                             }) ?? false;
                             if (!res)
                             {
                                 _fail.Invoke(new Exception("Failed to read data"), _userData);
+                                error ??= $"Read '{_filePath?.FullName ?? "null"}': Failed to read data";
                                 return false;
                             }
                             _bytesFinish!.Invoke(logic._readData, _userData);
@@ -206,6 +208,7 @@ namespace Archivarius.Storage.Remote
                         {
                             logic._readData?.Release();
                             _fail.Invoke(ex, _userData);
+                            error ??= $"Read '{_filePath?.FullName ?? "null"}': {ex.Message}";
                             return false;
                         }
                         finally
@@ -222,6 +225,7 @@ namespace Archivarius.Storage.Remote
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            error ??= $"IsExists '{_filePath?.FullName ?? "null"}': {ex.Message}";
                             return false;
                         }
                     case CommandType.GetNested:
@@ -230,6 +234,7 @@ namespace Archivarius.Storage.Remote
                             var res = logic._storageAccessor.Reader?.GetNested(_dirPath!, _boolParam);
                             if (res == null)
                             {
+                                error ??= $"GetNested '{_dirPath?.FullName ?? "null"}': GetNested() returned NULL";
                                 return false;
                             }
                             
@@ -239,6 +244,7 @@ namespace Archivarius.Storage.Remote
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            error ??= $"GetNested '{_dirPath?.FullName ?? "null"}': {ex.Message}";
                             return false;
                         }
                     case CommandType.Write:
@@ -266,6 +272,7 @@ namespace Archivarius.Storage.Remote
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            error ??= $"Write '{_filePath?.FullName ?? "null"}': {ex.Message}";
                             return false;
                         }
                         finally
@@ -288,6 +295,7 @@ namespace Archivarius.Storage.Remote
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            error ??= $"Erase '{_filePath?.FullName ?? "null"}': {ex.Message}";
                             return false;
                         }
                     default:

@@ -6,6 +6,7 @@ namespace Archivarius.Storage.Remote
     {
         public CommandType Type;
         public bool Success;
+        public string? Error;
         public TimeSpan Duration;
     }
 }
