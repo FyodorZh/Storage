@@ -19,11 +19,11 @@ namespace Archivarius.Storage
         protected bool _hasIndex;
         protected IndexData _index;
         
-        protected int _cachedSmallPackId = -1;
-        protected SmallPackData? _cachedSmallPack;
+        //protected int _cachedSmallPackId = -1;
+        //protected SmallPackData? _cachedSmallPack;
 
-        protected int _cachedBigPackId = -1;
-        protected BigPackData? _cachedBigPack;
+        //protected int _cachedBigPackId = -1;
+        //protected BigPackData? _cachedBigPack;
         
         public static BigReadOnlyChainStorage<TData> LoadFrom(IReadOnlyKeyValueStorage storage, DirPath path, bool noCache = false)
         {
@@ -62,7 +62,7 @@ namespace Archivarius.Storage
                 }
             }
 
-            if (!_hasIndex)
+            if (!_noIndexCache && !_hasIndex)
             {
                 throw new Exception();
             }
@@ -76,33 +76,33 @@ namespace Archivarius.Storage
             return await _storage.GetStruct<BigPackData>(packPath) ?? throw new Exception($"Failed to load '{string.Format(_index.BigPackName, bigPackId)}'");
         }
 
-        protected async ValueTask<BigPackData> GetBigPack_Unsafe(int bigPackId)
-        {
-            if (_cachedBigPackId != bigPackId || _cachedBigPack == null)
-            {
-                _cachedBigPack = await GetBigPack_Unsafe_NoCache(bigPackId);
-                _cachedBigPackId = bigPackId;
-            }
-            return _cachedBigPack.Value;
-        }
+        // protected async ValueTask<BigPackData> GetBigPack_Unsafe(int bigPackId)
+        // {
+        //     if (_cachedBigPackId != bigPackId || _cachedBigPack == null)
+        //     {
+        //         _cachedBigPack = await GetBigPack_Unsafe_NoCache(bigPackId);
+        //         _cachedBigPackId = bigPackId;
+        //     }
+        //     return _cachedBigPack.Value;
+        // }
 
         protected async Task<SmallPackData> GetSmallPack_Unsafe_NoCache(int smallPackId)
         {
             string packName = string.Format(_index.SmallPackName, smallPackId);
             var packPath = _rootPath.File(packName);
-            return await _storage.GetStruct<SmallPackData>(packPath) ?? throw new Exception($"Failed to load '{string.Format(_index.SmallPackName, smallPackId)}'");
+            return await _storage.GetStruct<SmallPackData>(packPath) ?? throw new Exception($"Failed to load '{packName}'");
         }
 
-        protected async ValueTask<SmallPackData> GetSmallPack_Unsafe(int smallPackId)
-        {
-            if (_cachedSmallPackId != smallPackId || _cachedSmallPack == null)
-            {
-                _cachedSmallPack = await GetSmallPack_Unsafe_NoCache(smallPackId);
-                _cachedSmallPackId = smallPackId;
-            }
-                
-            return _cachedSmallPack.Value;
-        }
+        // protected async ValueTask<SmallPackData> GetSmallPack_Unsafe(int smallPackId)
+        // {
+        //     if (_cachedSmallPackId != smallPackId || _cachedSmallPack == null)
+        //     {
+        //         _cachedSmallPack = await GetSmallPack_Unsafe_NoCache(smallPackId);
+        //         _cachedSmallPackId = smallPackId;
+        //     }
+        //         
+        //     return _cachedSmallPack.Value;
+        // }
 
         protected async Task<TData> GetElement_Unsafe(int elementId)
         {
@@ -117,15 +117,15 @@ namespace Archivarius.Storage
             return element;
         }
 
-        public async Task ClearCache()
-        {
-            await _locker.WaitAsync();
-            _cachedSmallPackId = -1;
-            _cachedSmallPack = null;
-            _cachedBigPackId = -1;
-            _cachedBigPack = null;
-            _locker.Release();
-        }
+        // public async Task ClearCache()
+        // {
+        //     await _locker.WaitAsync();
+        //     _cachedSmallPackId = -1;
+        //     _cachedSmallPack = null;
+        //     _cachedBigPackId = -1;
+        //     _cachedBigPack = null;
+        //     _locker.Release();
+        // }
 
         public async Task<int> GetCount()
         {
@@ -641,8 +641,8 @@ namespace Archivarius.Storage
                     if (depth >= 2)
                     {
                         // clear small packs cache
-                        _cachedSmallPack = null;
-                        _cachedSmallPackId = -1;
+                        //_cachedSmallPack = null;
+                        //_cachedSmallPackId = -1;
                         if (maintainCleanStorage)
                         {
                             int smallPacksCountInBigPack = index.BigPackSize / index.SmallPackSize;

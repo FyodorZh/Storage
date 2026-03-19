@@ -13,14 +13,7 @@ namespace Archivarius.Storage.Test.ChainStorage
             {
                 if (rnd.NextDouble() < 0.001)
                 {
-                    if (rnd.NextDouble() < 0.5)
-                    {
-                        yield return new ClearCache_Command<Payload>();
-                    }
-                    else
-                    {
-                        yield return new RewriteData_Command<Payload>(rnd.Next() % 2 == 1, rnd.Next() % 2 == 1, rnd.Next() % 2 == 1);
-                    }
+                    yield return new RewriteData_Command<Payload>(rnd.Next() % 2 == 1, rnd.Next() % 2 == 1, rnd.Next() % 2 == 1);
                 }
                 else if (rnd.NextDouble() < 0.01)
                 {

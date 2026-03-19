@@ -7,7 +7,7 @@ namespace Archivarius.Storage
     public interface IReadOnlyChainStorage<TData>
         where TData : class, IDataStruct
     {
-        Task ClearCache();
+        //Task ClearCache();
         Task<int> GetCount();
         Task<TData?> GetAt(int id);
         IAsyncEnumerable<IReadOnlyList<TData>> GetAll();
