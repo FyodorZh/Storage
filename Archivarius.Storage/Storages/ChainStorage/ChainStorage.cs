@@ -16,9 +16,6 @@ namespace Archivarius.Storage
         private readonly bool _noIndexCache;
         protected bool _hasIndex;
         protected IndexData _index;
-
-        // protected int _cachedPackId = -1;
-        // protected PackData? _cachedPack;
         
         public static ReadOnlyChainStorage<TData> LoadFrom(IReadOnlyKeyValueStorage storage, DirPath path, bool noCache = false)
         {
@@ -66,21 +63,6 @@ namespace Archivarius.Storage
 
         protected async ValueTask<PackData> GetPack_Unsafe(int packId)
         {
-            // if (_cachedPackId != packId || _cachedPack == null)
-            // {
-            //     string packName = string.Format(_index.PackName, packId);
-            //     var packPath = _rootPath.File(packName);
-            //     _cachedPack = await _storage.GetVersionedStruct<PackData>(packPath);
-            //     _cachedPackId = packId;
-            // }
-            //
-            // if (_cachedPack == null)
-            // {
-            //     throw new Exception("Failed to load data");
-            // }
-            //     
-            // return _cachedPack.Value;
-            
             string packName = string.Format(_index.PackName, packId);
             var packPath = _rootPath.File(packName);
             return await _storage.GetVersionedStruct<PackData>(packPath) ?? throw new Exception($"Failed to load '{packName}'");
@@ -98,14 +80,6 @@ namespace Archivarius.Storage
 
             return element;
         }
-
-        // public async Task ClearCache()
-        // {
-        //     await _locker.WaitAsync();
-        //     _cachedPackId = -1;
-        //     _cachedPack = null;
-        //     _locker.Release();
-        // }
 
         public async Task<int> GetCount()
         {
